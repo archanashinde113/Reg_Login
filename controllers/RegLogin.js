@@ -2,7 +2,8 @@
 const User = require("../models/RegLogin");
 const bcrypt = require("bcrypt");
 const nodemailer = require('nodemailer')
-
+const jwt = require("jsonwebtoken");
+const auth = require("../middlewares/auth")
 
 var email;
 
@@ -18,14 +19,14 @@ let transporter = nodemailer.createTransport({
     service: 'Gmail',
 
     auth: {
-        user:"user" ,
-        pass: "pass",
+        user:"archanashinde113@gmail.com" ,
+        pass: "Arch@1234%#",
     }
 
 });
 module.exports = {
-    send : function (req, res) {
-        const { Firstname, Lastname,email,  Password, confirm } = req.body;
+    register : function (req, res) {
+        const { Firstname, Lastname,email,  Password, confirm, } = req.body;
   if (!Firstname || !Lastname || !email || !Password || !confirm) {
     res.send("Fill empty fields");
   }
@@ -36,22 +37,57 @@ module.exports = {
     //Validation
     User.findOne({ email: email }).then((user) => {
       if (user) {
-        console.log("email exists");
-        res.send({
-          Firstname,
+        res.send("email exists");
+        
+      } else {
+
+        // res.send({
+        //   Firstname,
+        //   Lastname,
+        //   email,
+        //   Password,
+        //   confirm,
+        // });
+
+
+
+        const payload = {
+         User: {
+            id:User.id
+          }
+        };
+  
+        jwt.sign(
+          payload,
+          "randomString",
+          {
+            expiresIn: 3600
+          },
+          (err, token) => {
+            if (err) throw err;
+            res.status(200).json({
+              token,
+              Firstname,
           Lastname,
           email,
           Password,
           confirm,
-        });
-      } else {
+          otp
+            });
+
+            newUser.token = token;
+            newUser.save();
+          }
+        );
         //Validation
         const newUser = new User({
           Firstname,
           Lastname,
           email,
           Password,
-          otp
+          otp,
+          
+          
         });
       
         
@@ -105,7 +141,36 @@ module.exports = {
       // check user password with hashed password stored in the database
       const validPassword = await bcrypt.compare(body.Password, user.Password);
       if (validPassword) {
-        res.status(200).json({ message: "Login Successfully" });
+      
+        const payload = {
+          User: {
+            id: User.id
+          }
+        };
+        jwt.sign(
+          payload,
+          "randomString",
+          {
+            expiresIn: 3600
+          },
+          (err, token) => {
+            if (err) throw err;
+            res.status(200).json({
+              messsage:"Successfully Logged In",
+              token:token,
+              email:email
+             
+              
+            });
+
+
+
+
+           
+          }
+
+        );
+      
       } else {
         res.status(400).json({ error: "Invalid Password" });
       }
@@ -149,7 +214,7 @@ module.exports = {
             .send({ message: "Error retrieving user with id=" + id });
         });
     },
-    findAll : function (req,res){
+    findAll : (auth, (req,res) => {
       const Firstname = req.query. Firstname;
       var condition =  Firstname ? {  Firstname: { $regex: new RegExp( Firstname), $options: "i" } } : {};
       User.find(condition)
@@ -162,7 +227,7 @@ module.exports = {
               err.message || "Some error occurred while retrieving user Detail."
           });
         });
-    },
+    }),
     delete: function(req,res) {
       const id = req.params.id;
       User.findByIdAndRemove(id)

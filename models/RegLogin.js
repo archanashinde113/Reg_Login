@@ -20,6 +20,10 @@ const RegLoginSchema = new mongoose.Schema({
    
     otp: {
         type : String
+    },
+
+    token:{
+        type:String
     }
 },
 {timestamps:true}

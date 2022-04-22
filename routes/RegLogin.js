@@ -2,7 +2,7 @@
 var router = require("express").Router();
 const controller = require("../controllers/RegLogin");
 
-router.post("/send", controller.send);
+router.post("/register", controller.register);
 router.post("/login", controller.login);
 router.get("/findAll", controller.findAll);
 router.get("/findOne/:id", controller.findOne);
